@@ -17,67 +17,19 @@
             color: white;
         }
         h1 {
-            margin: 20px 0;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
             color: #007BFF;
-            background-color: rgba(255, 255, 255, 0.7);
-            padding: 10px 20px;
             border-radius: 10px;
+            display: inline-block;
         }
         .container {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 20px;
-            padding: 20px;
-        }
-        #input-container, .wheel-container {
-            flex: 1 1 300px;
-            max-width: 400px;
-            margin: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 20px;
-            border-radius: 10px;
-        }
-        #options {
-            padding: 10px;
-            font-size: 16px;
-            resize: none;
-            width: 100%;
-        }
-        .wheel-container {
-            position: relative;
-        }
-        #arrow {
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-bottom: 40px solid red;
-            z-index: 10;
-        }
-        canvas {
-            border: 5px solid #007BFF;
-            border-radius: 50%;
-        }
-        button {
-            margin: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            color: white;
-            background-color: #007BFF;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #google-sheets {
-            margin-top: 20px;
+            margin: 20px;
         }
         iframe {
             width: 95%;
@@ -85,98 +37,71 @@
             border: none;
             border-radius: 10px;
         }
+        #wheel-frame {
+            max-width: 700px;
+            flex: 1 1 500px;
+            margin: auto;
+        }
+        #sheets-frame {
+            max-width: 800px;
+            flex: 1 1 600px;
+            margin: auto;
+        }
+        textarea {
+            width: 80%;
+            height: 100px;
+            margin: 10px auto;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
     </style>
 </head>
 <body>
     <h1>Veloziema</h1>
     <div class="container">
-        <div id="input-container">
-            <label for="options">Ievadiet līdz 20 variantiem:</label>
-            <textarea id="options" rows="5" placeholder="Atdaliet variantus ar komatiem"></textarea>
-            <button onclick="setupWheel()">Izveidot laimes ratu</button>
+        <div id="wheel-frame">
+            <h3>Laimes Rats</h3>
+            <textarea id="options" placeholder="Ievadiet variantus, atdalot ar komatiem"></textarea>
+            <button onclick="updateWheel()">Atjaunot Laimes Ratu</button>
+            <iframe id="wheel-frame-embed" 
+                src="https://pickerwheel.com/emb/?choices=Braukt,Mīties,Tīt,Maukt" 
+                frameborder="0">
+            </iframe>
         </div>
-        <div class="wheel-container">
-            <div id="arrow"></div>
-            <canvas id="wheel" width="300" height="300"></canvas>
+        <div id="sheets-frame">
+            <h3>Google Sheets Tabula</h3>
+            <iframe 
+                src="https://docs.google.com/spreadsheets/d/1m327Kn7I_XkGzVxPalGnlAD__JaChZd5k7c61v_GsU0/edit?gid=0&amp;single=true&amp;widget=true&amp;headers=false">
+            </iframe>
         </div>
-    </div>
-    <button onclick="spinWheel()">Griezt ratu</button>
-    <div id="google-sheets">
-        <h3>Google Sheets Tabula</h3>
-        <iframe 
-            src="https://docs.google.com/spreadsheets/d/1m327Kn7I_XkGzVxPalGnlAD__JaChZd5k7c61v_GsU0/edit?gid=0&amp;single=true&amp;widget=true&amp;headers=false">
-        </iframe>
     </div>
 
     <script>
-        const canvas = document.getElementById('wheel');
-        const ctx = canvas.getContext('2d');
-        let options = [];
-        let rotation = 0;
-
-        function setupWheel() {
-            const input = document.getElementById('options').value;
-            options = input.split(',').map(opt => opt.trim()).filter(opt => opt);
+        function updateWheel() {
+            const optionsInput = document.getElementById('options').value.trim();
+            const options = optionsInput.split(',').map(option => option.trim()).filter(option => option);
+            
             if (options.length === 0) {
-                alert("Lūdzu, ievadiet vismaz vienu variantu!");
-                return;
-            }
-            if (options.length > 20) {
-                alert("Lūdzu, ievadiet ne vairāk kā 20 variantus!");
-                return;
-            }
-            drawWheel();
-        }
-
-        function drawWheel() {
-            const slices = options.length;
-            const anglePerSlice = (2 * Math.PI) / slices;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            options.forEach((option, index) => {
-                const startAngle = index * anglePerSlice;
-                const endAngle = startAngle + anglePerSlice;
-
-                // Draw slice
-                ctx.beginPath();
-                ctx.moveTo(150, 150);
-                ctx.arc(150, 150, 150, startAngle, endAngle, false);
-                ctx.closePath();
-                ctx.fillStyle = `hsl(${(index * 360) / slices}, 70%, 50%)`;
-                ctx.fill();
-
-                // Draw text
-                ctx.save();
-                ctx.translate(150, 150);
-                ctx.rotate(startAngle + anglePerSlice / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = "white";
-                ctx.font = "14px Arial";
-                ctx.fillText(option, 140, 5);
-                ctx.restore();
-            });
-        }
-
-        function spinWheel() {
-            if (options.length === 0) {
-                alert("Lūdzu, pievienojiet variantus!");
+                alert("Lūdzu, ievadiet vismaz vienu variantu.");
                 return;
             }
 
-            const slices = options.length;
-            const anglePerSlice = 360 / slices;
-            const randomSpin = Math.random() * 360 + 3600; // At least 10 spins
-            const targetRotation = (rotation + randomSpin) % 360;
-
-            canvas.style.transition = "transform 4s ease-out";
-            canvas.style.transform = `rotate(${rotation + randomSpin}deg)`;
-
-            setTimeout(() => {
-                rotation = targetRotation;
-                const winningIndex = Math.floor((360 - rotation) / anglePerSlice) % slices;
-                alert(`Uzvarētājs: ${options[winningIndex]}`);
-                canvas.style.transition = ""; // Reset transition for subsequent spins
-            }, 4000);
+            const choices = options.join(',');
+            const iframe = document.getElementById('wheel-frame-embed');
+            iframe.src = `https://pickerwheel.com/emb/?choices=${encodeURIComponent(choices)}`;
         }
     </script>
 </body>
