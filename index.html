@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veloziema</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            margin-top: 20px;
+            color: #007BFF;
+        }
+        #input-container {
+            margin: 20px 0;
+        }
+        #wheel {
+            margin: 20px auto;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 5px solid #007BFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            background: conic-gradient(#FF0000, #00FF00, #0000FF, #FFFF00);
+        }
+        #google-sheets {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Veloziema</h1>
+
+    <div id="input-container">
+        <label for="options">Ievadiet līdz 20 variantiem:</label><br>
+        <textarea id="options" rows="5" cols="40" placeholder="Atdaliet variantus ar komatiem"></textarea><br>
+        <button onclick="setupWheel()">Izveidot laimes ratu</button>
+    </div>
+
+    <div id="wheel">Griez mani!</div>
+    <button onclick="spinWheel()">Griezt ratu</button>
+
+    <div id="google-sheets">
+        <h3>Google Sheets Tabula</h3>
+        <iframe 
+            src=https://docs.google.com/spreadsheets/d/1m327Kn7I_XkGzVxPalGnlAD__JaChZd5k7c61v_GsU0/edit?gid=0&amp;single=true&amp;widget=true&amp;headers=false" 
+            width="100%" 
+            height="400">
+        </iframe>
+    </div>
+
+    <script>
+        const wheel = document.getElementById('wheel');
+        let options = [];
+
+        function setupWheel() {
+            const input = document.getElementById('options').value;
+            options = input.split(',').map(opt => opt.trim()).filter(opt => opt);
+            if (options.length > 20) {
+                alert("Lūdzu, ievadiet ne vairāk kā 20 variantus!");
+                return;
+            }
+            renderWheel();
+        }
+
+        function renderWheel() {
+            const angle = 360 / options.length;
+            let gradient = options.map((opt, i) => {
+                const startAngle = i * angle;
+                const endAngle = startAngle + angle;
+                return `hsl(${(i * 60) % 360}, 70%, 50%) ${startAngle}deg ${endAngle}deg`;
+            }).join(', ');
+            wheel.style.background = `conic-gradient(${gradient})`;
+            wheel.textContent = "Griez mani!";
+        }
+
+        function spinWheel() {
+            if (options.length === 0) {
+                alert("Lūdzu, pievienojiet variantus!");
+                return;
+            }
+            const spinAngle = Math.floor(Math.random() * 360 + 3600); // Random spin
+            const index = Math.floor(((spinAngle % 360) / (360 / options.length)));
+            wheel.style.transition = "transform 4s ease-out";
+            wheel.style.transform = `rotate(${spinAngle}deg)`;
+            setTimeout(() => {
+                alert(`Rezultāts: ${options[index]}`);
+                wheel.style.transition = ""; // Reset transition
+                wheel.style.transform = ""; // Reset rotation
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
