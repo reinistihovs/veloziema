@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veloziema</title>
+    <title>Laimes Rats</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,35 +17,52 @@
             color: white;
         }
         h1 {
-            margin: 20px 0;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
             color: #007BFF;
-            background-color: rgba(255, 255, 255, 0.7);
-            padding: 10px 20px;
             border-radius: 10px;
+            display: inline-block;
         }
         .container {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 20px;
-            padding: 20px;
+            margin: 20px;
         }
         #input-container, .wheel-container {
             flex: 1 1 300px;
             max-width: 400px;
-            margin: auto;
-            background-color: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             padding: 20px;
             border-radius: 10px;
         }
-        #options {
+        textarea {
+            width: 100%;
+            height: 100px;
             padding: 10px;
             font-size: 16px;
-            resize: none;
-            width: 100%;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
         }
         .wheel-container {
             position: relative;
+        }
+        canvas {
+            border-radius: 50%;
+            border: 5px solid #007BFF;
         }
         #arrow {
             position: absolute;
@@ -59,40 +76,13 @@
             border-bottom: 40px solid red;
             z-index: 10;
         }
-        canvas {
-            border: 5px solid #007BFF;
-            border-radius: 50%;
-        }
-        button {
-            margin: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            color: white;
-            background-color: #007BFF;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #google-sheets {
-            margin-top: 20px;
-        }
-        iframe {
-            width: 95%;
-            height: 600px;
-            border: none;
-            border-radius: 10px;
-        }
     </style>
 </head>
 <body>
-    <h1>Veloziema</h1>
+    <h1>Laimes Rats</h1>
     <div class="container">
         <div id="input-container">
-            <label for="options">Ievadiet līdz 20 variantiem:</label>
-            <textarea id="options" rows="5" placeholder="Atdaliet variantus ar komatiem"></textarea>
+            <textarea id="options" placeholder="Ievadiet variantus, atdalot ar komatiem"></textarea>
             <button onclick="setupWheel()">Izveidot laimes ratu</button>
         </div>
         <div class="wheel-container">
@@ -101,82 +91,104 @@
         </div>
     </div>
     <button onclick="spinWheel()">Griezt ratu</button>
-    <div id="google-sheets">
-        <h3>Google Sheets Tabula</h3>
-        <iframe 
-            src="https://docs.google.com/spreadsheets/d/1m327Kn7I_XkGzVxPalGnlAD__JaChZd5k7c61v_GsU0/edit?gid=0&amp;single=true&amp;widget=true&amp;headers=false">
-        </iframe>
-    </div>
 
     <script>
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
+        const radius = canvas.width / 2;
+        const center = radius;
+
         let options = [];
-        let rotation = 0;
+        let currentAngle = 0;
+        let spinAngle = 0;
 
         function setupWheel() {
-            const input = document.getElementById('options').value;
+            const input = document.getElementById('options').value.trim();
             options = input.split(',').map(opt => opt.trim()).filter(opt => opt);
             if (options.length === 0) {
-                alert("Lūdzu, ievadiet vismaz vienu variantu!");
+                alert('Lūdzu, ievadiet vismaz vienu variantu!');
                 return;
             }
             if (options.length > 20) {
-                alert("Lūdzu, ievadiet ne vairāk kā 20 variantus!");
+                alert('Ne vairāk kā 20 varianti!');
                 return;
             }
             drawWheel();
         }
 
         function drawWheel() {
-            const slices = options.length;
-            const anglePerSlice = (2 * Math.PI) / slices;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            options.forEach((option, index) => {
-                const startAngle = index * anglePerSlice;
+            const anglePerSlice = (2 * Math.PI) / options.length;
+
+            options.forEach((option, i) => {
+                const startAngle = i * anglePerSlice;
                 const endAngle = startAngle + anglePerSlice;
 
                 // Draw slice
                 ctx.beginPath();
-                ctx.moveTo(150, 150);
-                ctx.arc(150, 150, 150, startAngle, endAngle, false);
-                ctx.closePath();
-                ctx.fillStyle = `hsl(${(index * 360) / slices}, 70%, 50%)`;
+                ctx.moveTo(center, center);
+                ctx.arc(center, center, radius, startAngle, endAngle);
+                ctx.fillStyle = `hsl(${(i * 360) / options.length}, 70%, 50%)`;
                 ctx.fill();
+                ctx.closePath();
 
                 // Draw text
                 ctx.save();
-                ctx.translate(150, 150);
+                ctx.translate(center, center);
                 ctx.rotate(startAngle + anglePerSlice / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "white";
                 ctx.font = "14px Arial";
-                ctx.fillText(option, 140, 5);
+                ctx.fillText(option, radius - 10, 5);
                 ctx.restore();
             });
         }
 
         function spinWheel() {
             if (options.length === 0) {
-                alert("Lūdzu, pievienojiet variantus!");
+                alert('Nav variantu! Lūdzu, vispirms pievienojiet variantus.');
                 return;
             }
 
-            const slices = options.length;
-            const anglePerSlice = 360 / slices;
+            // Determine spin angle
+            const totalSlices = options.length;
+            const anglePerSlice = 360 / totalSlices;
             const randomSpin = Math.random() * 360 + 3600; // At least 10 spins
-            const targetRotation = (rotation + randomSpin) % 360;
+            spinAngle = (spinAngle + randomSpin) % 360;
 
-            canvas.style.transition = "transform 4s ease-out";
-            canvas.style.transform = `rotate(${rotation + randomSpin}deg)`;
+            // Animate spin
+            let currentRotation = 0;
+            const duration = 4000; // 4 seconds
+            const startTime = performance.now();
 
-            setTimeout(() => {
-                rotation = targetRotation;
-                const winningIndex = Math.floor((360 - rotation) / anglePerSlice) % slices;
-                alert(`Uzvarētājs: ${options[winningIndex]}`);
-                canvas.style.transition = ""; // Reset transition for subsequent spins
-            }, 4000);
+            function animateSpin(time) {
+                const elapsed = time - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                currentRotation = spinAngle * easeOutCubic(progress);
+
+                canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateSpin);
+                } else {
+                    determineWinner(currentRotation % 360);
+                }
+            }
+
+            requestAnimationFrame(animateSpin);
+        }
+
+        function determineWinner(finalAngle) {
+            const totalSlices = options.length;
+            const anglePerSlice = 360 / totalSlices;
+
+            // Calculate winning slice
+            const winningIndex = Math.floor((360 - finalAngle + anglePerSlice / 2) % 360 / anglePerSlice);
+            alert(`Uzvarētājs: ${options[winningIndex]}`);
+        }
+
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
         }
     </script>
 </body>
