@@ -14,14 +14,12 @@
             background-image: url('https://velomens.lv/wp-content/uploads/2022/11/IMG_4511-scaled.jpg');
             background-size: cover;
             background-position: center;
-            background-attachment: fixed;
             color: white;
         }
         h1 {
             margin: 20px 0;
             color: #007BFF;
             background-color: rgba(255, 255, 255, 0.7);
-            display: inline-block;
             padding: 10px 20px;
             border-radius: 10px;
         }
@@ -40,59 +38,33 @@
             padding: 20px;
             border-radius: 10px;
         }
-        #input-container label, #input-container textarea, #input-container button {
-            margin-bottom: 10px;
-            width: 100%;
-        }
         #options {
             padding: 10px;
             font-size: 16px;
             resize: none;
+            width: 100%;
         }
         .wheel-container {
             position: relative;
         }
-        #wheel {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            border: 5px solid #007BFF;
-            transform-origin: center;
-            transition: transform 4s ease-out;
-        }
-        #wheel canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-        }
         #arrow {
             position: absolute;
-            top: -10px;
+            top: -30px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
             border-bottom: 40px solid red;
             z-index: 10;
         }
-        #google-sheets {
-            margin-top: 20px;
-            padding: 20px;
-        }
-        #google-sheets iframe {
-            width: 95%;
-            height: 600px;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        canvas {
+            border: 5px solid #007BFF;
+            border-radius: 50%;
         }
         button {
+            margin: 10px;
             padding: 10px 20px;
             font-size: 16px;
             color: white;
@@ -100,40 +72,35 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
         }
         button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            background-color: #0056b3;
         }
-        button:active {
-            transform: scale(0.95);
+        #google-sheets {
+            margin-top: 20px;
         }
-        @media (max-width: 768px) {
-            #input-container, .wheel-container {
-                max-width: 100%;
-            }
+        iframe {
+            width: 95%;
+            height: 600px;
+            border: none;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
     <h1>Veloziema</h1>
-
     <div class="container">
         <div id="input-container">
             <label for="options">Ievadiet līdz 20 variantiem:</label>
-            <textarea id="options" rows="5" cols="40" placeholder="Atdaliet variantus ar komatiem"></textarea>
+            <textarea id="options" rows="5" placeholder="Atdaliet variantus ar komatiem"></textarea>
             <button onclick="setupWheel()">Izveidot laimes ratu</button>
         </div>
-
         <div class="wheel-container">
             <div id="arrow"></div>
             <canvas id="wheel" width="300" height="300"></canvas>
         </div>
     </div>
-
     <button onclick="spinWheel()">Griezt ratu</button>
-
     <div id="google-sheets">
         <h3>Google Sheets Tabula</h3>
         <iframe 
@@ -144,13 +111,16 @@
     <script>
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
-        const arrow = document.getElementById('arrow');
         let options = [];
         let rotation = 0;
 
         function setupWheel() {
             const input = document.getElementById('options').value;
             options = input.split(',').map(opt => opt.trim()).filter(opt => opt);
+            if (options.length === 0) {
+                alert("Lūdzu, ievadiet vismaz vienu variantu!");
+                return;
+            }
             if (options.length > 20) {
                 alert("Lūdzu, ievadiet ne vairāk kā 20 variantus!");
                 return;
@@ -163,9 +133,6 @@
             const anglePerSlice = (2 * Math.PI) / slices;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.font = "14px Arial";
-            ctx.textAlign = "center";
-
             options.forEach((option, index) => {
                 const startAngle = index * anglePerSlice;
                 const endAngle = startAngle + anglePerSlice;
@@ -182,8 +149,10 @@
                 ctx.save();
                 ctx.translate(150, 150);
                 ctx.rotate(startAngle + anglePerSlice / 2);
-                ctx.fillStyle = "#FFF";
-                ctx.fillText(option, 100, 5);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "white";
+                ctx.font = "14px Arial";
+                ctx.fillText(option, 140, 5);
                 ctx.restore();
             });
         }
@@ -194,18 +163,19 @@
                 return;
             }
 
-            const randomAngle = Math.random() * 360 + 3600; // At least 10 full spins
-            const sliceAngle = 360 / options.length;
-            const totalSlices = options.length;
+            const slices = options.length;
+            const anglePerSlice = 360 / slices;
+            const randomSpin = Math.random() * 360 + 3600; // At least 10 spins
+            const targetRotation = (rotation + randomSpin) % 360;
 
             canvas.style.transition = "transform 4s ease-out";
-            canvas.style.transform = `rotate(${randomAngle + rotation}deg)`;
+            canvas.style.transform = `rotate(${rotation + randomSpin}deg)`;
 
             setTimeout(() => {
-                rotation = (randomAngle % 360 + rotation) % 360;
-                const winningIndex = Math.floor((360 - rotation) / sliceAngle) % totalSlices;
-                alert(`Rezultāts: ${options[winningIndex]}`);
-                canvas.style.transition = "";
+                rotation = targetRotation;
+                const winningIndex = Math.floor((360 - rotation) / anglePerSlice) % slices;
+                alert(`Uzvarētājs: ${options[winningIndex]}`);
+                canvas.style.transition = ""; // Reset transition for subsequent spins
             }, 4000);
         }
     </script>
