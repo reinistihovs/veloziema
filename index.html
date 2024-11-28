@@ -71,13 +71,13 @@
         }
         #arrow {
             position: absolute;
-            top: -20px;
+            top: -10px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
             border-bottom: 40px solid red;
             z-index: 10;
         }
@@ -147,7 +147,6 @@
         const arrow = document.getElementById('arrow');
         let options = [];
         let rotation = 0;
-        let currentSpin = 0;
 
         function setupWheel() {
             const input = document.getElementById('options').value;
@@ -164,7 +163,7 @@
             const anglePerSlice = (2 * Math.PI) / slices;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.font = "16px Arial";
+            ctx.font = "14px Arial";
             ctx.textAlign = "center";
 
             options.forEach((option, index) => {
@@ -173,7 +172,7 @@
 
                 // Draw slice
                 ctx.beginPath();
-                ctx.moveTo(150, 150); // Center of wheel
+                ctx.moveTo(150, 150);
                 ctx.arc(150, 150, 150, startAngle, endAngle, false);
                 ctx.closePath();
                 ctx.fillStyle = `hsl(${(index * 360) / slices}, 70%, 50%)`;
@@ -184,7 +183,7 @@
                 ctx.translate(150, 150);
                 ctx.rotate(startAngle + anglePerSlice / 2);
                 ctx.fillStyle = "#FFF";
-                ctx.fillText(option, 100, 5); // Position text along radius
+                ctx.fillText(option, 100, 5);
                 ctx.restore();
             });
         }
@@ -194,21 +193,19 @@
                 alert("Lūdzu, pievienojiet variantus!");
                 return;
             }
+
             const randomAngle = Math.random() * 360 + 3600; // At least 10 full spins
-            currentSpin = randomAngle;
+            const sliceAngle = 360 / options.length;
             const totalSlices = options.length;
-            const sliceAngle = 360 / totalSlices;
 
             canvas.style.transition = "transform 4s ease-out";
-            canvas.style.transform = `rotate(${randomAngle}deg)`;
-
-            const winningIndex = Math.floor(((360 - (randomAngle % 360)) / sliceAngle) % totalSlices);
+            canvas.style.transform = `rotate(${randomAngle + rotation}deg)`;
 
             setTimeout(() => {
+                rotation = (randomAngle % 360 + rotation) % 360;
+                const winningIndex = Math.floor((360 - rotation) / sliceAngle) % totalSlices;
                 alert(`Rezultāts: ${options[winningIndex]}`);
                 canvas.style.transition = "";
-                canvas.style.transform = "";
-                rotation = (360 - (randomAngle % 360)) % 360;
             }, 4000);
         }
     </script>
