@@ -32,7 +32,7 @@
             gap: 20px;
             padding: 20px;
         }
-        #input-container, #wheel {
+        #input-container, .wheel-container {
             flex: 1 1 300px;
             max-width: 400px;
             margin: auto;
@@ -49,18 +49,37 @@
             font-size: 16px;
             resize: none;
         }
+        .wheel-container {
+            position: relative;
+        }
         #wheel {
+            position: relative;
             width: 300px;
             height: 300px;
             border-radius: 50%;
             border: 5px solid #007BFF;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: white;
-            background: conic-gradient(#FF0000, #00FF00, #0000FF, #FFFF00);
-            transition: transform 0.4s ease-in-out, background 0.4s ease-in-out;
+            transform-origin: center;
+            transition: transform 4s ease-out;
+        }
+        #wheel canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+        #arrow {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 40px solid red;
+            z-index: 10;
         }
         #google-sheets {
             margin-top: 20px;
@@ -91,13 +110,8 @@
             transform: scale(0.95);
         }
         @media (max-width: 768px) {
-            #input-container, #wheel {
+            #input-container, .wheel-container {
                 max-width: 100%;
-            }
-            #wheel {
-                width: 100%;
-                height: auto;
-                padding-bottom: 100%;
             }
         }
     </style>
@@ -112,7 +126,10 @@
             <button onclick="setupWheel()">Izveidot laimes ratu</button>
         </div>
 
-        <div id="wheel">Griez mani!</div>
+        <div class="wheel-container">
+            <div id="arrow"></div>
+            <canvas id="wheel" width="300" height="300"></canvas>
+        </div>
     </div>
 
     <button onclick="spinWheel()">Griezt ratu</button>
@@ -125,8 +142,12 @@
     </div>
 
     <script>
-        const wheel = document.getElementById('wheel');
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const arrow = document.getElementById('arrow');
         let options = [];
+        let rotation = 0;
+        let currentSpin = 0;
 
         function setupWheel() {
             const input = document.getElementById('options').value;
@@ -135,18 +156,37 @@
                 alert("Lūdzu, ievadiet ne vairāk kā 20 variantus!");
                 return;
             }
-            renderWheel();
+            drawWheel();
         }
 
-        function renderWheel() {
-            const angle = 360 / options.length;
-            let gradient = options.map((opt, i) => {
-                const startAngle = i * angle;
-                const endAngle = startAngle + angle;
-                return `hsl(${(i * 60) % 360}, 70%, 50%) ${startAngle}deg ${endAngle}deg`;
-            }).join(', ');
-            wheel.style.background = `conic-gradient(${gradient})`;
-            wheel.textContent = "Griez mani!";
+        function drawWheel() {
+            const slices = options.length;
+            const anglePerSlice = (2 * Math.PI) / slices;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = "16px Arial";
+            ctx.textAlign = "center";
+
+            options.forEach((option, index) => {
+                const startAngle = index * anglePerSlice;
+                const endAngle = startAngle + anglePerSlice;
+
+                // Draw slice
+                ctx.beginPath();
+                ctx.moveTo(150, 150); // Center of wheel
+                ctx.arc(150, 150, 150, startAngle, endAngle, false);
+                ctx.closePath();
+                ctx.fillStyle = `hsl(${(index * 360) / slices}, 70%, 50%)`;
+                ctx.fill();
+
+                // Draw text
+                ctx.save();
+                ctx.translate(150, 150);
+                ctx.rotate(startAngle + anglePerSlice / 2);
+                ctx.fillStyle = "#FFF";
+                ctx.fillText(option, 100, 5); // Position text along radius
+                ctx.restore();
+            });
         }
 
         function spinWheel() {
@@ -154,14 +194,21 @@
                 alert("Lūdzu, pievienojiet variantus!");
                 return;
             }
-            const spinAngle = Math.floor(Math.random() * 360 + 3600); // Random spin
-            const index = Math.floor(((spinAngle % 360) / (360 / options.length)));
-            wheel.style.transition = "transform 4s ease-out";
-            wheel.style.transform = `rotate(${spinAngle}deg)`;
+            const randomAngle = Math.random() * 360 + 3600; // At least 10 full spins
+            currentSpin = randomAngle;
+            const totalSlices = options.length;
+            const sliceAngle = 360 / totalSlices;
+
+            canvas.style.transition = "transform 4s ease-out";
+            canvas.style.transform = `rotate(${randomAngle}deg)`;
+
+            const winningIndex = Math.floor(((360 - (randomAngle % 360)) / sliceAngle) % totalSlices);
+
             setTimeout(() => {
-                alert(`Rezultāts: ${options[index]}`);
-                wheel.style.transition = ""; // Reset transition
-                wheel.style.transform = ""; // Reset rotation
+                alert(`Rezultāts: ${options[winningIndex]}`);
+                canvas.style.transition = "";
+                canvas.style.transform = "";
+                rotation = (360 - (randomAngle % 360)) % 360;
             }, 4000);
         }
     </script>
